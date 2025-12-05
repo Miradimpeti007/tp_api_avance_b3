@@ -1,154 +1,64 @@
-# tp_api_avance_b3
+# 🛒 API TP
 
-````markdown
-# API E-Commerce Avancée (Node.js / Express / Sequelize)
 
-Cette API RESTful implémente un backend complet pour une plateforme e-commerce. Elle se distingue par une gestion avancée des requêtes produits (filtrage complexe, pagination, projection) et une authentification sécurisée par double token (JWT Access & Refresh) avec rotation.
 
-## 🛠 Technologies
+Une API RESTful robuste et évolutive pour une plateforme e-commerce, construite avec **Node.js**, **Express** et **Sequelize**.
 
-* **Runtime** : Node.js
-* **Framework** : Express.js (v5)
-* **Base de données** : MySQL
-* **ORM** : Sequelize & Sequelize-CLI
-* **Sécurité** : Bcrypt (Hashage), JSON Web Token (JWT)
-* **Architecture** : MVC (Modèle-Vue-Contrôleur)
-
-## ✨ Fonctionnalités Principales
-
-### 🔐 Authentification & Sécurité
-* **Inscription & Connexion** : Gestion des utilisateurs avec mots de passe hashés (Bcrypt).
-* **Double Token JWT** : Utilisation d'un `accessToken` (durée courte) et d'un `refreshToken` (durée longue).
-* **Token Rotation** : Sécurité renforcée lors du rafraîchissement des tokens (invalidation immédiate de l'ancien refresh token).
-* **Révocation (Logout)** : Blacklisting des refresh tokens en base de données lors de la déconnexion.
-* **Protection des Routes** : Middleware de vérification des tokens Bearer.
-
-### 📦 Catalogue Produits (Query Builder Avancé)
-L'endpoint de produits expose un moteur de recherche puissant via les paramètres d'URL :
-* **Filtrage par Opérateurs** : Supporte `gt`, `gte`, `lt`, `lte`, `eq`, `ne`, `like`, `in`.
-* **Pagination** : Gestion des pages et des limites d'éléments.
-* **Tri** : Tri ascendant ou descendant sur plusieurs champs.
-* **Projection** : Sélection dynamique des champs à retourner (Sparse Fieldsets).
-* **Inclusion** : Chargement des relations (ex: Catégories).
+Ce projet se distingue par une architecture **MVC** stricte, une sécurité renforcée (Double Token Auth avec rotation) et un moteur de requête puissant pour le filtrage des produits.
 
 ---
 
-## 🚀 Installation et Configuration
+## 📑 Table des Matières
+
+1. [Fonctionnalités Clés](#-fonctionnalités-clés)
+2. [Stack Technique](#-stack-technique)
+3. [Guide d'Installation](#-guide-dinstallation)
+4. [Documentation de l'API](#-documentation-de-lapi)
+    - [Authentification](#authentification)
+    - [Gestion des Utilisateurs](#gestion-des-utilisateurs)
+    - [Catalogue Produits (Query Builder)](#catalogue-produits-query-builder)
+5. [Architecture du Projet](#-architecture-du-projet)
+
+---
+
+## ✨ Fonctionnalités Clés
+
+### 🔐 Sécurité & Authentification (Niveau Industriel)
+* **Double Token Strategy** : Utilisation combinée d'un `Access Token` (court terme) et d'un `Refresh Token` (long terme).
+* **Token Rotation** : Sécurité maximale grâce au remplacement du Refresh Token à chaque utilisation (détection de vol de session).
+* **Révocation (Blacklisting)** : Invalidation immédiate des tokens en base de données lors de la déconnexion.
+* **Hashage** : Sécurisation des mots de passe et des tokens via `bcrypt`.
+
+### 📦 Moteur de Recherche Produits
+Exposition d'une API flexible permettant au client de construire des vues dynamiques :
+* **Filtrage Avancé** : Support des opérateurs logiques (`>`, `<`, `=`, `LIKE`, `IN`, etc.).
+* **Pagination & Tri** : Contrôle total sur le volume et l'ordre des données.
+* **Projection (Sparse Fieldsets)** : Optimisation de la bande passante en ne demandant que les champs nécessaires.
+
+---
+
+## 🛠 Stack Technique
+
+| Catégorie | Technologie | Rôle |
+| :--- | :--- | :--- |
+| **Runtime** | Node.js | Environnement d'exécution serveur |
+| **Framework** | Express.js (v5) | Routage et Middlewares |
+| **Base de Données** | MySQL | Stockage relationnel |
+| **ORM** | Sequelize | Abstraction et gestion des modèles BDD |
+| **Sécurité** | JWT & Bcrypt | Gestion des sessions stateless et cryptographie |
+
+---
+
+## 🚀 Guide d'Installation
 
 ### Prérequis
-* Node.js (v18+)
-* MySQL Server
+* Node.js (v18 ou supérieur)
+* MySQL Server en cours d'exécution
 
-### 1. Clonage et Installation
+### 1. Installation
+Clonez le dépôt et installez les dépendances :
+
 ```bash
-git clone [https://github.com/votre-utilisateur/tp_api_avance_b3.git](https://github.com/votre-utilisateur/tp_api_avance_b3.git)
+git clone [https://github.com/votre-compte/tp_api_avance_b3.git](https://github.com/votre-compte/tp_api_avance_b3.git)
 cd tp_api_avance_b3
 npm install
-````
-
-### 2\. Configuration d'Environnement
-
-Créez un fichier `.env` à la racine du projet et configurez les variables suivantes :
-
-```env
-# Base de données
-DB_HOST=127.0.0.1
-DB_USER=root
-DB_PASS=votre_mot_de_passe
-DB_NAME=apiavancerdb
-DB_PORT=3306
-DB_DIALECT=mysql
-
-# Sécurité JWT (Utilisez des chaînes cryptographiques longues et aléatoires)
-JWT_ACCESS_SECRET=votre_secret_access_token_tres_securise
-JWT_REFRESH_SECRET=votre_secret_refresh_token_tres_securise
-```
-
-### 3\. Base de Données
-
-Assurez-vous que la base de données spécifiée (`apiavancerdb`) existe dans votre MySQL. Sequelize synchronisera les tables au démarrage (ou via les migrations si configurées).
-
-### 4\. Démarrage
-
-```bash
-# Lancer le serveur
-npm start
-```
-
-Le serveur sera accessible sur `http://localhost:8080`.
-
------
-
-## 📚 Documentation de l'API
-
-### 👤 Utilisateurs (`/api/users`)
-
-| Méthode | Endpoint | Description | Auth Requise |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/` | Créer un nouveau compte utilisateur | ❌ Non |
-| `GET` | `/:id` | Récupérer le profil d'un utilisateur | ✅ Oui |
-
-### 🔑 Authentification (`/api/auth`)
-
-| Méthode | Endpoint | Description | Body Requis |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/login` | Connexion | `{ "email": "...", "password": "..." }` |
-| `POST` | `/refresh` | Renouveler l'Access Token (Token Rotation) | `{ "token": "refresh_token", "userId": 1 }` |
-| `POST` | `/logout` | Déconnexion (Révocation du token) | `{ "token": "refresh_token", "userId": 1 }` |
-
-### 🛒 Produits (`/api/products`)
-
-L'endpoint `GET /api/products` est **protégé** (Auth Requise) et supporte les paramètres avancés suivants :
-
-#### Pagination
-
-  * `?page=1&limit=10`
-
-#### Tri (`sort`)
-
-  * `?sort=price` (Croissant)
-  * `?sort=-price` (Décroissant)
-  * Champs autorisés : `name`, `price`, `created_at`, `id`.
-
-#### Projection (`fields`)
-
-  * `?fields=id,name,price` (Retourne uniquement ces champs).
-
-#### Filtrage Avancé (`filter`)
-
-La syntaxe est `filter[champ][opérateur]=valeur`.
-
-| Opérateur API | Opérateur SQL (Sequelize) | Exemple d'URL | Description |
-| :--- | :--- | :--- | :--- |
-| `eq` | `=` | `filter[price][eq]=100` | Prix égal à 100 |
-| `gt` | `>` | `filter[price][gt]=50` | Prix strictement supérieur à 50 |
-| `lt` | `<` | `filter[price][lt]=200` | Prix strictement inférieur à 200 |
-| `like` | `LIKE %...%` | `filter[name][like]=table` | Nom contenant "table" |
-| `in` | `IN (...)` | `filter[id][in]=1,2,5` | ID est 1, 2 ou 5 |
-| (standard) | `=` | `filter[category]=Meubles` | Recherche par nom de catégorie |
-
-**Exemple combiné :**
-Récupérer les produits de la catégorie "Informatique", dont le prix est supérieur à 500€, triés par nom :
-
-```http
-GET /api/products?filter[category]=Informatique&filter[price][gt]=500&sort=name
-```
-
------
-
-## 📂 Structure du Projet
-
-```
-tp_api_avance_b3/
-├── config/              # Configuration DB & Environnement
-├── controllers/         # Logique métier (Auth, Produits, Users)
-├── middlewares/         # Middlewares (Auth, Erreurs, Validation)
-├── models/              # Définitions des tables Sequelize (User, Session, Product...)
-├── routes/              # Définition des endpoints API
-├── server.js            # Point d'entrée de l'application
-├── .env                 # Variables d'environnement (non versionné)
-└── package.json         # Dépendances et scripts
-```
-
-```
-```
