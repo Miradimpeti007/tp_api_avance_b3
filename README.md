@@ -1,199 +1,241 @@
 
-# 🛒 API Avancée
+# RESTful API 
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg) ![Node](https://img.shields.io/badge/Node.js-v18%2B-green) ![License](https://img.shields.io/badge/license-ISC-lightgrey)
 
-Une API RESTful robuste et évolutive pour une plateforme e-commerce, construite avec **Node.js**, **Express** et **Sequelize**.
+## 🏗 Architecture du Projet
 
-Ce projet se distingue par une architecture **MVC** stricte, une sécurité renforcée (Double Token Auth avec rotation) et un moteur de requête puissant pour le filtrage des produits.
 
----
+### Flux de Données (Data Flow)
+1. **Request** : Le client envoie une requête HTTP.
+2. **Server** : `server.js` initialise l'application et les middlewares globaux.
+3. **Router** : `routes/` dirige la requête vers le bon endpoint.
+4. **Middleware** : `middlewares/` intercepte la requête pour la sécurité (Auth) ou la validation.
+5. **Controller** : `controllers/` exécute la logique métier.
+6. **Model** : `models/` interagit avec la base de données via Sequelize.
+7. **Response** : Le serveur renvoie une réponse JSON standardisée.
 
-## 📑 Table des Matières
-
-1. [Fonctionnalités Clés](#-fonctionnalités-clés)
-2. [Stack Technique](#-stack-technique)
-3. [Guide d'Installation](#-guide-dinstallation)
-4. [Documentation de l'API](#-documentation-de-lapi)
-    - [Authentification](#authentification)
-    - [Gestion des Utilisateurs](#gestion-des-utilisateurs)
-    - [Catalogue Produits (Query Builder)](#catalogue-produits-query-builder)
-5. [Architecture du Projet](#-architecture-du-projet)
-
----
-
-## ✨ Fonctionnalités Clés
-
-### 🔐 Sécurité & Authentification (Niveau Industriel)
-* **Double Token Strategy** : Utilisation combinée d'un `Access Token` (court terme) et d'un `Refresh Token` (long terme).
-* **Token Rotation** : Sécurité maximale grâce au remplacement du Refresh Token à chaque utilisation (détection de vol de session).
-* **Révocation (Blacklisting)** : Invalidation immédiate des tokens en base de données lors de la déconnexion.
-* **Hashage** : Sécurisation des mots de passe et des tokens via `bcrypt`.
-
-### 📦 Moteur de Recherche Produits
-Exposition d'une API flexible permettant au client de construire des vues dynamiques :
-* **Filtrage Avancé** : Support des opérateurs logiques (`>`, `<`, `=`, `LIKE`, `IN`, etc.).
-* **Pagination & Tri** : Contrôle total sur le volume et l'ordre des données.
-* **Projection (Sparse Fieldsets)** : Optimisation de la bande passante en ne demandant que les champs nécessaires.
-
----
-
-## 🛠 Stack Technique
-
-| Catégorie | Technologie | Rôle |
-| :--- | :--- | :--- |
-| **Runtime** | Node.js | Environnement d'exécution serveur |
-| **Framework** | Express.js (v5) | Routage et Middlewares |
-| **Base de Données** | MySQL | Stockage relationnel |
-| **ORM** | Sequelize | Abstraction et gestion des modèles BDD |
-| **Sécurité** | JWT & Bcrypt | Gestion des sessions stateless et cryptographie |
-
----
-
-## 🚀 Guide d'Installation
-
-### Prérequis
-* Node.js (v18 ou supérieur)
-* MySQL Server en cours d'exécution
-
-### 1. Installation
-Clonez le dépôt et installez les dépendances :
-
-```bash
-git clone [https://github.com/votre-compte/tp_api_avance_b3.git](https://github.com/votre-compte/tp_api_avance_b3.git)
-cd tp_api_avance_b3
-npm install
+### Arborescence
+```plaintext
+/
+├── config/             # Configuration BDD & Variables d'env
+├── controllers/        # Logique métier (Auth, Produits, Users)
+├── middlewares/        # Sécurité (JWT) & Gestion des erreurs
+├── models/             # Modèles de données (Sequelize) & Relations
+├── routes/             # Définitions des endpoints API
+└── server.js           # Point d'entrée
 ````
 
-### 2\. Configuration (.env)
+-----
 
-Créez un fichier `.env` à la racine du projet en vous basant sur les variables suivantes :
+## 💾 Base de Données (Schéma Relationnel)
 
-```ini
-# Configuration Base de Données
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_NAME=apiavancerdb
-DB_USER=root
-DB_PASS=votre_mot_de_passe
-DB_DIALECT=mysql
+### Description des Entités
 
-# Secrets JWT (Générez des clés longues et aléatoires pour la production)
-JWT_ACCESS_SECRET=secret_access_complexe_et_long
-JWT_REFRESH_SECRET=secret_refresh_complexe_et_long
-```
-
-### 3\. Base de Données
-
-Créez simplement la base de données vide. L'ORM se chargera de créer les tables au démarrage.
-
-```sql
-CREATE DATABASE apiavancerdb;
-```
-
-### 4\. Démarrage
-
-```bash
-# Mode production
-npm start
-
-# Le serveur sera accessible sur http://localhost:8080
-```
+1.  **Users** : Gestion des comptes avec mots de passe hachés (Bcrypt) et rôles.
+2.  **Sessions** : Stockage sécurisé des *Refresh Tokens* pour gérer la rotation et la révocation (Logout).
+3.  **Products** : Catalogue principal avec gestion des stocks et prix.
+4.  **Categories** : Classification des produits.
 
 -----
 
-## 📚 Documentation de l'API
+## 📖 Documentation API Complète
 
-### Authentification
+### Conventions
 
-Base URL : `/api/auth`
-
-| Méthode | Endpoint | Description | Payload (JSON) |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/login` | Connexion utilisateur | `{ "email": "...", "password": "..." }` |
-| `POST` | `/refresh` | Renouveler l'Access Token | `{ "token": "refresh_token", "userId": 1 }` |
-| `POST` | `/logout` | Déconnexion (Révocation) | `{ "token": "refresh_token", "userId": 1 }` |
-
-> **Note :** L'endpoint `/refresh` implémente la rotation. Il renvoie une nouvelle paire (Access + Refresh) et invalide l'ancien Refresh Token.
-
-### Gestion des Utilisateurs
-
-Base URL : `/api/users`
-
-| Méthode | Endpoint | Description | Auth Requise |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/` | Création de compte | ❌ Non |
-| `GET` | `/:id` | Profil utilisateur | ✅ Oui (Bearer) |
+  * **Base URL** : `http://localhost:8080/api`
+  * **Format de réponse** : JSON
+  * **Authentification** : `Authorization: Bearer <access_token>` (pour les routes protégées).
 
 -----
 
-### Catalogue Produits (Query Builder)
+### 1\. Authentification (`/auth`)
 
-Base URL : `/api/products`
-**Auth Requise :** ✅ Oui (Header `Authorization: Bearer <token>`)
+Ce module gère le cycle de vie des sessions via une stratégie de **Double Token** avec rotation.
 
-Cet endpoint permet de filtrer dynamiquement les résultats via des paramètres d'URL (Query Params).
+#### 🟢 Connexion
 
-#### 1\. Pagination & Tri
+**POST** `/auth/login`
+Authentifie l'utilisateur et délivre la paire de tokens initiaux.
 
-  * **Pagination** : `?page=1&limit=10`
-  * **Tri (`sort`)** :
-      * Croissant : `?sort=price`
-      * Décroissant : `?sort=-price` (ajouter un `-`)
-      * Champs supportés : `name`, `price`, `created_at`, `id`.
+  * **Body Requis :**
+    ```json
+    {
+      "email": "john.doe@example.com",
+      "password": "secretpassword"
+    }
+    ```
+  * **Réponse (200 OK) :**
+    ```json
+    {
+      "accessToken": "eyJhbGciOiJIUzI1Ni...", // Valide 15 min
+      "refreshToken": "eyJhbGciOiJIUzI1Ni..." // Valide 7 jours
+    }
+    ```
 
-#### 2\. Projection (`fields`)
+#### 🔄 Rafraîchissement (Token Rotation)
 
-Permet de réduire la taille de la réponse en ne sélectionnant que les colonnes utiles.
+**POST** `/auth/refresh`
+Échange un Refresh Token valide contre une nouvelle paire de tokens. **L'ancien Refresh Token est immédiatement invalidé (blacklisté) pour empêcher le vol de session.**
 
-  * Exemple : `?fields=id,name,stock`
+  * **Body Requis :**
+    ```json
+    {
+      "token": "votre_refresh_token_actuel",
+      "userId": 1
+    }
+    ```
 
-#### 3\. Filtrage Avancé (`filter`)
+#### 🔴 Déconnexion
 
-Syntaxe : `filter[champ][opérateur]=valeur`
+**POST** `/auth/logout`
+Révoque définitivement le Refresh Token en base de données.
 
-| Opérateur | Signification | Exemple d'URL |
-| :--- | :--- | :--- |
-| `eq` | Égal (`=`) | `filter[price][eq]=100` |
-| `ne` | Différent (`!=`) | `filter[category_id][ne]=1` |
-| `gt` | Supérieur strict (`>`) | `filter[price][gt]=50` |
-| `lt` | Inférieur strict (`<`) | `filter[stock][lt]=5` |
-| `like` | Contient (Recherche) | `filter[name][like]=Gaming` |
-| `in` | Dans une liste | `filter[id][in]=1,2,3` |
+  * **Body Requis :**
+    ```json
+    {
+      "token": "votre_refresh_token_a_revoquer",
+      "userId": 1
+    }
+    ```
 
-#### 🔥 Exemples de Requêtes Complexes
+-----
 
-**Scénario :** Rechercher des produits de la catégorie "Informatique", coûtant plus de 500€, dont le nom contient "Pro", triés par prix croissant.
+### 2\. Gestion Utilisateurs (`/users`)
+
+#### Création de compte
+
+**POST** `/users`
+
+  * **Body :** `{ "email": "...", "password": "...", "role": "user" }`
+  * **Code :** `201 Created`
+
+#### Profil Utilisateur
+
+**GET** `/users/:id`
+
+  * **Auth :** Requise (Bearer Token)
+  * **Réponse :** Retourne l'objet utilisateur (sans le mot de passe).
+
+-----
+
+### 3\. Catalogue Produits (`/products`)
+
+**GET** `/products`
+
+  * **Auth :** Requise (Bearer Token)
+
+Cet endpoint expose un **moteur de requête (Query Builder)** permettant de filtrer, trier et paginer les données directement via l'URL.
+
+#### A. Pagination
+
+Contrôlez le volume de données retournées.
+
+  * `page` : Numéro de la page (défaut : 1).
+  * `limit` : Nombre d'éléments par page.
+
+> `GET /products?page=2&limit=25`
+
+#### B. Tri (`sort`)
+
+Définissez l'ordre d'affichage. Ajoutez un préfixe `-` pour un tri décroissant (DESC).
+
+  * Champs supportés : `name`, `price`, `created_at`, `id`.
+
+> `GET /products?sort=-price` (Du plus cher au moins cher)
+> `GET /products?sort=name` (Ordre alphabétique)
+
+#### C. Projection (`fields`)
+
+Optimisez la bande passante en ne demandant que les colonnes nécessaires (séparées par des virgules).
+
+> `GET /products?fields=id,name,stock`
+
+#### D. Filtrage Avancé (`filter`)
+
+L'API utilise une syntaxe de filtrage structurée : `filter[champ][opérateur]=valeur`.
+
+| Opérateur API | Équivalent SQL | Description | Exemple Usage |
+| :--- | :--- | :--- | :--- |
+| `eq` | `=` | Égalité stricte | `filter[price][eq]=100` |
+| `ne` | `!=` | Différent de | `filter[stock][ne]=0` |
+| `gt` | `>` | Strictement supérieur | `filter[price][gt]=500` |
+| `gte` | `>=` | Supérieur ou égal | `filter[price][gte]=10` |
+| `lt` | `<` | Strictement inférieur | `filter[price][lt]=1000` |
+| `lte` | `<=` | Inférieur ou égal | `filter[stock][lte]=5` |
+| `like` | `LIKE %...%` | Recherche textuelle partielle | `filter[name][like]=Gaming` |
+| `in` | `IN (...)` | Présent dans une liste | `filter[id][in]=1,2,5` |
+
+**Filtre Spécial :**
+
+  * `filter[category]=NomCategorie` : Filtre directement par le nom de la catégorie associée.
+
+-----
+
+### 🧪 Exemples de Requêtes Complexes
+
+**Scénario 1 : Recherche Client**
+*"Je cherche un ordinateur (Catégorie 'Informatique'), dont le nom contient 'Pro', avec un prix supérieur à 800€, trié par prix croissant."*
 
 ```http
-GET /api/products?filter[category]=Informatique&filter[price][gt]=500&filter[name][like]=Pro&sort=price
+GET /api/products?filter[category]=Informatique&filter[name][like]=Pro&filter[price][gt]=800&sort=price
+```
+
+**Scénario 2 : Gestion des Stocks (Admin)**
+*"Affiche-moi les 50 produits dont le stock est inférieur à 10 unités (alerte rupture), et ne renvoie que l'ID, le Nom et le Stock."*
+
+```http
+GET /api/products?filter[stock][lt]=10&limit=50&fields=id,name,stock
 ```
 
 -----
 
-## 📂 Architecture du Projet
+## 🚦 Codes de Statut HTTP
 
-Le projet suit une structure modulaire claire pour faciliter la maintenance.
+L'API utilise les codes HTTP standards pour indiquer le succès ou l'échec d'une requête.
 
-```plaintext
-.
-├── config/             # Configuration de la BDD et chargement .env
-├── controllers/        # Logique métier (Le "Cerveau" de l'API)
-│   ├── AuthController.js
-│   ├── ProductController.js
-│   └── UserController.js
-├── middlewares/        # Intercepteurs HTTP
-│   ├── AuthMiddleware.js    # Vérification JWT
-│   └── ErrorMiddleware.js   # Gestion globale des erreurs
-├── models/             # Définitions des schémas de données (Sequelize)
-│   ├── init-models.js       # Centralisation des relations
-│   ├── user.js
-│   ├── session.js
-│   └── ...
-├── routes/             # Définitions des endpoints et méthodes HTTP
-└── server.js           # Point d'entrée de l'application
+| Code | Signification | Contexte |
+| :--- | :--- | :--- |
+| **200** | OK | Requête traitée avec succès. |
+| **201** | Created | Ressource créée (ex: Inscription). |
+| **400** | Bad Request | Erreur de validation ou syntaxe (ex: filtre invalide). |
+| **401** | Unauthorized | Token manquant ou invalide. |
+| **403** | Forbidden | Token expiré (Nécessite un refresh). |
+| **404** | Not Found | Ressource introuvable. |
+| **500** | Internal Server Error | Erreur critique côté serveur / BDD. |
+
+-----
+
+## 🚀 Guide de Démarrage Rapide
+
+1.  **Cloner & Installer**
+
+    ```bash
+    git clone <url-repo>
+    npm install
+    ```
+
+2.  **Configuration**
+    Créez un fichier `.env` à la racine (voir modèle ci-dessous).
+
+3.  **Lancer**
+
+    ```bash
+    npm start
+    ```
+
+    L'API est accessible sur `http://localhost:8080`.
+
+<!-- end list -->
+
+```ini
+# Exemple de fichier .env requis
+DB_HOST=127.0.0.1
+DB_NAME=apiavancerdb
+DB_USER=root
+DB_PASS=votre_password
+JWT_ACCESS_SECRET=votre_cle_secrete_longue
+JWT_REFRESH_SECRET=votre_cle_secrete_longue_et_differente
 ```
 
 ```
-
 ```
